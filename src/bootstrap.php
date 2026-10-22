@@ -13,6 +13,9 @@ require __DIR__ . '/Tx.php';
 require __DIR__ . '/Auth.php';
 require __DIR__ . '/Wallet.php';
 require __DIR__ . '/Products.php';
+require __DIR__ . '/Stp.php';
+require __DIR__ . '/Investments.php';
+require __DIR__ . '/Loans.php';
 
 Config::load(__DIR__ . '/../.env');
 

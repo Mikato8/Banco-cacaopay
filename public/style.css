@@ -88,6 +88,13 @@ h3 { margin: 0 0 14px; font-size: 16px; color: var(--accent); }
   width: 100%; min-width: 0;
 }
 .form.inline .btn { flex-shrink: 0; white-space: nowrap; }
+.form.columns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.form.columns .btn { grid-column: 1 / -1; }
+@media (max-width: 480px) {
+  .form.columns { grid-template-columns: 1fr; }
+}
+.list-head { margin-top: 18px; margin-bottom: 10px; }
+.list-head h3 { font-size: 14px; margin: 0; }
 .form input:focus, .form select:focus { outline: 2px solid var(--blue); border-color: transparent; }
 
 .btn {
@@ -123,6 +130,12 @@ h3 { margin: 0 0 14px; font-size: 16px; color: var(--accent); }
 .badge.deposit { background: rgba(14, 138, 95, 0.12); color: var(--green); }
 .badge.transfer_out, .badge.transfer_in { background: rgba(29, 78, 216, 0.12); color: var(--blue); }
 .badge.redeem { background: rgba(214, 69, 69, 0.12); color: var(--red); }
+.badge.withdraw { background: rgba(214, 69, 69, 0.12); color: var(--red); }
+.badge.invest, .badge.loan { background: rgba(29, 78, 216, 0.12); color: var(--blue); }
+.badge.invest_redeem { background: rgba(14, 138, 95, 0.12); color: var(--green); }
+.badge.loan_repay { background: rgba(214, 69, 69, 0.12); color: var(--red); }
+.badge.in { background: rgba(14, 138, 95, 0.12); color: var(--green); }
+.badge.out { background: rgba(214, 69, 69, 0.12); color: var(--red); }
 
 .demo-hint { margin-top: 16px; font-size: 12px; line-height: 1.8; text-align: left; }
 .demo-hint code { background: var(--panel-2); padding: 2px 5px; border-radius: 4px; }

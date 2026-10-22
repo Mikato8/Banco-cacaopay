@@ -52,8 +52,10 @@ async function loadDashboard() {
     $('fiatLabel').textContent = balance.fiat_currency;
     $('rateInfo').textContent =
       'Tasa: 1 ' + balance.fiat_currency + ' = ' + balance.cacao_per_fiat + ' cacao';
+    $('investRate').textContent = '(tasa anual ' + Math.round(balance.invest_annual_rate * 100) + '%)';
+    $('loanRate').textContent = '(tasa anual ' + Math.round(balance.loan_annual_rate * 100) + '%)';
 
-    await Promise.all([loadProducts(), loadLedger()]);
+    await Promise.all([loadProducts(), loadLedger(), loadStpTransfers(), loadInvestments(), loadLoans()]);
   } catch (e) {
     toast(e.message, true);
     showAuth();
@@ -113,18 +115,103 @@ async function loadLedger() {
   }
 }
 
+async function loadStpTransfers() {
+  try {
+    const data = await api('/stp/transfers');
+    const wrap = $('stpTransfers');
+    if (!data.transfers.length) {
+      wrap.innerHTML = '<p class="muted small">Sin transferencias STP.</p>';
+      return;
+    }
+    wrap.innerHTML = data.transfers
+      .map((t) => {
+        const dir = t.direction === 'IN' ? '+' : '-';
+        const cls = t.direction === 'IN' ? 'in' : 'out';
+        const label = t.direction === 'IN'
+          ? 'Depósito · ' + (t.reference || '')
+          : 'Retiro a ' + (t.beneficiary || '') + ' · ' + (t.account_number || '');
+        return `<div class="ledger-row">
+          <span class="badge ${t.direction.toLowerCase()}">STP ${t.direction}</span>
+          <span class="amount ${cls}">${dir}${Number(t.amount_cacao).toFixed(2)} ${SEED}</span>
+          <span class="muted small">${escapeHtml(label)} · ${new Date(t.created_at).toLocaleString()}</span>
+        </div>`;
+      })
+      .join('');
+  } catch (e) {
+    $('stpTransfers').innerHTML = '<p class="muted small">Error al cargar transferencias.</p>';
+  }
+}
+
+async function loadInvestments() {
+  try {
+    const data = await api('/investments');
+    const wrap = $('investments');
+    if (!data.investments.length) {
+      wrap.innerHTML = '<p class="muted small">No tienes inversiones activas.</p>';
+      return;
+    }
+    wrap.innerHTML = data.investments
+      .map((i) => `
+        <div class="ledger-row">
+          <span class="amount in">${Number(i.total).toFixed(2)} ${SEED}</span>
+          <span class="muted small">Capital ${i.principal_cacao} · +${i.interest_accrued} interés (${i.days_elapsed}d)</span>
+          <button class="btn btn-small btn-outline" data-redeem-inv="${i.id}">Redimir</button>
+        </div>`)
+      .join('');
+    wrap.querySelectorAll('[data-redeem-inv]').forEach((btn) =>
+      btn.addEventListener('click', () => redeemInvestment(btn.dataset.redeemInv))
+    );
+  } catch (e) {
+    $('investments').innerHTML = '<p class="muted small">Error al cargar inversiones.</p>';
+  }
+}
+
+async function loadLoans() {
+  try {
+    const data = await api('/loans');
+    const wrap = $('loans');
+    if (!data.loans.length) {
+      wrap.innerHTML = '<p class="muted small">No tienes préstamos activos.</p>';
+      return;
+    }
+    wrap.innerHTML = data.loans
+      .map((l) => `
+        <div class="ledger-row">
+          <span class="amount out">${Number(l.total_due).toFixed(2)} ${SEED}</span>
+          <span class="muted small">Capital ${l.principal_cacao} · +${l.interest_accrued} interés (${l.days_elapsed}d)</span>
+          <button class="btn btn-small btn-outline" data-repay="${l.id}">Pagar</button>
+        </div>`)
+      .join('');
+    wrap.querySelectorAll('[data-repay]').forEach((btn) =>
+      btn.addEventListener('click', () => repayLoan(btn.dataset.repay))
+    );
+  } catch (e) {
+    $('loans').innerHTML = '<p class="muted small">Error al cargar préstamos.</p>';
+  }
+}
+
 async function redeem(productId) {
   try {
-    const res = await api('/products/redeem', {
-      method: 'POST',
-      body: { productId, quantity: 1 },
-      idempotent: true,
-    });
-    toast('Canje exitoso: ' + res.redemption.product.name, false);
+    const res = await api('/products/redeem', { method: 'POST', body: { productId, quantity: 1 }, idempotent: true });
+    toast('Canje exitoso: ' + res.redemption.product.name);
     await loadDashboard();
-  } catch (e) {
-    toast(e.message, true);
-  }
+  } catch (e) { toast(e.message, true); }
+}
+
+async function redeemInvestment(investmentId) {
+  try {
+    const res = await api('/investments/redeem', { method: 'POST', body: { investmentId }, idempotent: true });
+    toast('Inversión redimida: +' + res.total + ' cacao (' + res.interest + ' de interés)');
+    await loadDashboard();
+  } catch (e) { toast(e.message, true); }
+}
+
+async function repayLoan(loanId) {
+  try {
+    const res = await api('/loans/repay', { method: 'POST', body: { loanId }, idempotent: true });
+    toast('Préstamo pagado: ' + res.total + ' cacao');
+    await loadDashboard();
+  } catch (e) { toast(e.message, true); }
 }
 
 function escapeHtml(s) {
@@ -159,9 +246,7 @@ $('loginForm').addEventListener('submit', async (e) => {
     localStorage.setItem('cacaopay_token', res.token);
     showView('app');
     await loadDashboard();
-  } catch (err) {
-    toast(err.message, true);
-  }
+  } catch (err) { toast(err.message, true); }
 });
 
 $('registerForm').addEventListener('submit', async (e) => {
@@ -169,21 +254,14 @@ $('registerForm').addEventListener('submit', async (e) => {
   try {
     const res = await api('/auth/register', {
       method: 'POST',
-      body: {
-        email: $('regEmail').value,
-        name: $('regName').value,
-        password: $('regPassword').value,
-        role: $('regRole').value,
-      },
+      body: { email: $('regEmail').value, name: $('regName').value, password: $('regPassword').value, role: $('regRole').value },
       auth: false,
     });
     state.token = res.token;
     localStorage.setItem('cacaopay_token', res.token);
     showView('app');
     await loadDashboard();
-  } catch (err) {
-    toast(err.message, true);
-  }
+  } catch (err) { toast(err.message, true); }
 });
 
 $('depositForm').addEventListener('submit', async (e) => {
@@ -197,9 +275,7 @@ $('depositForm').addEventListener('submit', async (e) => {
     toast('Depositado: +' + res.cacao_credited + ' cacao');
     $('depositAmount').value = '';
     await loadDashboard();
-  } catch (err) {
-    toast(err.message, true);
-  }
+  } catch (err) { toast(err.message, true); }
 });
 
 $('transferForm').addEventListener('submit', async (e) => {
@@ -207,19 +283,64 @@ $('transferForm').addEventListener('submit', async (e) => {
   try {
     const res = await api('/wallet/transfer', {
       method: 'POST',
-      body: {
-        toEmail: $('transferEmail').value,
-        amountCacao: parseFloat($('transferAmount').value),
-      },
+      body: { toEmail: $('transferEmail').value, amountCacao: parseFloat($('transferAmount').value) },
       idempotent: true,
     });
     toast('Enviado: ' + res.sent + ' cacao a ' + res.to.email);
     $('transferEmail').value = '';
     $('transferAmount').value = '';
     await loadDashboard();
-  } catch (err) {
-    toast(err.message, true);
-  }
+  } catch (err) { toast(err.message, true); }
+});
+
+$('withdrawForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    const res = await api('/stp/withdraw', {
+      method: 'POST',
+      body: {
+        amountCacao: parseFloat($('withdrawAmount').value),
+        clabe: $('withdrawClabe').value,
+        beneficiary: $('withdrawBeneficiary').value,
+        bankName: $('withdrawBank').value,
+      },
+      idempotent: true,
+    });
+    toast('Retiro STP enviado: ' + res.amount_mxn + ' MXN a ' + res.transfer.beneficiary);
+    $('withdrawAmount').value = '';
+    $('withdrawClabe').value = '';
+    $('withdrawBeneficiary').value = '';
+    $('withdrawBank').value = '';
+    await loadDashboard();
+  } catch (err) { toast(err.message, true); }
+});
+
+$('investForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    const res = await api('/investments', {
+      method: 'POST',
+      body: { amountCacao: parseFloat($('investAmount').value) },
+      idempotent: true,
+    });
+    toast('Invertido: ' + res.investment.principal_cacao + ' cacao');
+    $('investAmount').value = '';
+    await loadDashboard();
+  } catch (err) { toast(err.message, true); }
+});
+
+$('loanForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    const res = await api('/loans', {
+      method: 'POST',
+      body: { amountCacao: parseFloat($('loanAmount').value), termDays: parseInt($('loanTerm').value, 10) },
+      idempotent: true,
+    });
+    toast('Préstamo otorgado: +' + res.loan.principal_cacao + ' cacao');
+    $('loanAmount').value = '';
+    await loadDashboard();
+  } catch (err) { toast(err.message, true); }
 });
 
 $('logoutBtn').addEventListener('click', showAuth);

@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS transactions (
 CREATE TABLE IF NOT EXISTS ledger_entries (
     id               CHAR(36) NOT NULL PRIMARY KEY,
     transaction_id   CHAR(36) NOT NULL,
-    entry_type       ENUM('DEPOSIT','TRANSFER_OUT','TRANSFER_IN','REDEEM','ADJUST') NOT NULL,
+    entry_type       ENUM('DEPOSIT','TRANSFER_OUT','TRANSFER_IN','REDEEM','ADJUST','WITHDRAW','INVEST','INVEST_REDEEM','LOAN','LOAN_REPAY') NOT NULL,
     debit_account_id  CHAR(36) NOT NULL,
     credit_account_id CHAR(36) NOT NULL,
     amount           DECIMAL(20,2) NOT NULL,
@@ -72,6 +72,49 @@ CREATE TABLE IF NOT EXISTS redemptions (
     CONSTRAINT fk_redemptions_user    FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_redemptions_product FOREIGN KEY (product_id) REFERENCES products(id),
     CONSTRAINT fk_redemptions_txn     FOREIGN KEY (transaction_id) REFERENCES transactions(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS stp_transfers (
+    id             CHAR(36) NOT NULL PRIMARY KEY,
+    user_id        CHAR(36) NOT NULL,
+    direction      ENUM('IN','OUT') NOT NULL,
+    amount_mxn     DECIMAL(20,2) NOT NULL,
+    amount_cacao   DECIMAL(20,2) NOT NULL,
+    account_number VARCHAR(64) NOT NULL DEFAULT '',
+    bank_name      VARCHAR(128) NOT NULL DEFAULT '',
+    beneficiary    VARCHAR(255) NOT NULL DEFAULT '',
+    reference      VARCHAR(128) NOT NULL DEFAULT '',
+    status         ENUM('COMPLETED') NOT NULL DEFAULT 'COMPLETED',
+    transaction_id CHAR(36) NOT NULL,
+    created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_stp_user (user_id),
+    CONSTRAINT fk_stp_user FOREIGN KEY (user_id) REFERENCES users(id),
+    CONSTRAINT fk_stp_txn  FOREIGN KEY (transaction_id) REFERENCES transactions(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS investments (
+    id              CHAR(36) NOT NULL PRIMARY KEY,
+    user_id         CHAR(36) NOT NULL,
+    principal_cacao DECIMAL(20,2) NOT NULL,
+    annual_rate     DECIMAL(8,5) NOT NULL,
+    status          ENUM('ACTIVE','REDEEMED') NOT NULL DEFAULT 'ACTIVE',
+    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    redeemed_at     DATETIME NULL,
+    KEY idx_inv_user (user_id),
+    CONSTRAINT fk_inv_user FOREIGN KEY (user_id) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS loans (
+    id              CHAR(36) NOT NULL PRIMARY KEY,
+    user_id         CHAR(36) NOT NULL,
+    principal_cacao DECIMAL(20,2) NOT NULL,
+    annual_rate     DECIMAL(8,5) NOT NULL,
+    term_days       INT NOT NULL DEFAULT 30,
+    status          ENUM('ACTIVE','PAID') NOT NULL DEFAULT 'ACTIVE',
+    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    due_at          DATETIME NULL,
+    KEY idx_loan_user (user_id),
+    CONSTRAINT fk_loan_user FOREIGN KEY (user_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO accounts (id, kind, currency, balance)

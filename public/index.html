@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Banco CacaoPay</title>
-  <link rel="stylesheet" href="/style.css?v=2" />
+  <link rel="stylesheet" href="/style.css?v=3" />
 </head>
 <body>
   <header class="topbar">
@@ -20,7 +20,7 @@
     <section id="authView" class="card auth-card">
       <img class="hero-seed" src="/assets/cacao-seed.svg" alt="Semilla de cacao" />
       <h1>Bienvenido a CacaoPay</h1>
-      <p class="muted">Deposita soles, recibe cacao y paga servicios digitales.</p>
+      <p class="muted">Deposita pesos, recibe cacao, invierte y paga servicios digitales.</p>
 
       <div class="tabs">
         <button id="tabLogin" class="tab active">Iniciar sesión</button>
@@ -62,9 +62,9 @@
         </div>
 
         <div class="card">
-          <h3>Depositar (simulado)</h3>
+          <h3>Depositar vía STP</h3>
           <form id="depositForm" class="form">
-            <label>Monto en <span id="fiatLabel">PEN</span>
+            <label>Monto en <span id="fiatLabel">MXN</span>
               <input type="number" id="depositAmount" min="1" step="0.01" placeholder="25.00" required />
             </label>
             <button class="btn btn-primary" type="submit">Depositar</button>
@@ -82,6 +82,38 @@
       </div>
 
       <div class="card">
+        <h3>Retirar vía STP (a cuenta bancaria)</h3>
+        <form id="withdrawForm" class="form columns">
+          <label>Cantidad (cacao)<input type="number" id="withdrawAmount" min="0.01" step="0.01" required /></label>
+          <label>CLABE (18 dígitos)<input type="text" id="withdrawClabe" inputmode="numeric" maxlength="18" required /></label>
+          <label>Beneficiario<input type="text" id="withdrawBeneficiary" required /></label>
+          <label>Banco<input type="text" id="withdrawBank" placeholder="Ej. BBVA" /></label>
+          <button class="btn btn-primary" type="submit">Retirar</button>
+        </form>
+        <div class="list-head"><h3>Transferencias STP</h3></div>
+        <div id="stpTransfers" class="ledger"></div>
+      </div>
+
+      <div class="card">
+        <h3>Fondo de inversión <span class="muted small" id="investRate"></span></h3>
+        <form id="investForm" class="form">
+          <label>Cantidad (cacao)<input type="number" id="investAmount" min="0.01" step="0.01" required /></label>
+          <button class="btn btn-primary" type="submit">Invertir</button>
+        </form>
+        <div id="investments" class="ledger"></div>
+      </div>
+
+      <div class="card">
+        <h3>Préstamos <span class="muted small" id="loanRate"></span></h3>
+        <form id="loanForm" class="form columns">
+          <label>Cantidad (cacao)<input type="number" id="loanAmount" min="0.01" step="0.01" required /></label>
+          <label>Plazo (días)<input type="number" id="loanTerm" min="1" value="30" required /></label>
+          <button class="btn btn-primary" type="submit">Solicitar préstamo</button>
+        </form>
+        <div id="loans" class="ledger"></div>
+      </div>
+
+      <div class="card">
         <h3>Catálogo de productos</h3>
         <div id="products" class="products"></div>
       </div>
@@ -95,6 +127,6 @@
 
   <div id="toast" class="toast hidden"></div>
 
-  <script src="/app.js?v=2"></script>
+  <script src="/app.js?v=3"></script>
 </body>
 </html>

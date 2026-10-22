@@ -10,9 +10,11 @@ final class Wallet
         Response::json([
             'cacao_balance' => (float) Ledger::balanceOf($pdo, $user['id']),
             'cacao_per_fiat' => (float) Config::get('CACAO_PER_FIAT', '2'),
-            'fiat_currency' => Config::get('FIAT_CURRENCY', 'PEN'),
+            'fiat_currency' => Config::get('FIAT_CURRENCY', 'MXN'),
             'symbol' => '🌱',
             'unit' => 'cacao',
+            'invest_annual_rate' => (float) Config::get('INVEST_ANNUAL_RATE', '0.05'),
+            'loan_annual_rate' => (float) Config::get('LOAN_ANNUAL_RATE', '0.12'),
         ]);
     }
 

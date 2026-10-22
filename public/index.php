@@ -103,5 +103,35 @@ function route(string $method, string $path): never
         Products::redeem(Auth::requireAuth(), Http::body());
     }
 
+    if ($method === 'POST' && $path === '/api/stp/deposit') {
+        Stp::deposit(Auth::requireAuth(), Http::body());
+    }
+    if ($method === 'POST' && $path === '/api/stp/withdraw') {
+        Stp::withdraw(Auth::requireAuth(), Http::body());
+    }
+    if ($method === 'GET' && $path === '/api/stp/transfers') {
+        Stp::transfers(Auth::requireAuth());
+    }
+
+    if ($method === 'POST' && $path === '/api/investments') {
+        Investments::invest(Auth::requireAuth(), Http::body());
+    }
+    if ($method === 'GET' && $path === '/api/investments') {
+        Investments::list(Auth::requireAuth());
+    }
+    if ($method === 'POST' && $path === '/api/investments/redeem') {
+        Investments::redeem(Auth::requireAuth(), Http::body());
+    }
+
+    if ($method === 'POST' && $path === '/api/loans') {
+        Loans::request(Auth::requireAuth(), Http::body());
+    }
+    if ($method === 'GET' && $path === '/api/loans') {
+        Loans::list(Auth::requireAuth());
+    }
+    if ($method === 'POST' && $path === '/api/loans/repay') {
+        Loans::repay(Auth::requireAuth(), Http::body());
+    }
+
     Response::error('Ruta no encontrada', 404);
 }

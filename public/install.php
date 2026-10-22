@@ -18,8 +18,9 @@ try {
 
     $schema = (string) file_get_contents(__DIR__ . '/../db/schema.sql');
     $seed = (string) file_get_contents(__DIR__ . '/../db/seed.sql');
+    $migrate = (string) file_get_contents(__DIR__ . '/../db/migrate.sql');
 
-    foreach (explode(';', $schema . "\n" . $seed) as $statement) {
+    foreach (explode(';', $schema . "\n" . $seed . "\n" . $migrate) as $statement) {
         $statement = trim($statement);
         if ($statement === '') {
             continue;
