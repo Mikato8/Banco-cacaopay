@@ -9,15 +9,16 @@
 <body>
   <header class="topbar">
     <div class="brand">
-      <span class="coin" aria-hidden="true">🍫</span>
+      <img class="coin" src="/assets/cacao-seed.svg" alt="Semilla de cacao" />
       <span class="brand-name">Banco <strong>CacaoPay</strong></span>
     </div>
-    <button id="logoutBtn" class="btn btn-ghost hidden">Cerrar sesión</button>
+    <button id="logoutBtn" class="btn btn-outline hidden">Cerrar sesión</button>
   </header>
 
   <main>
     <!-- ===================== AUTH ===================== -->
     <section id="authView" class="card auth-card">
+      <img class="hero-seed" src="/assets/cacao-seed.svg" alt="Semilla de cacao" />
       <h1>Bienvenido a CacaoPay</h1>
       <p class="muted">Deposita soles, recibe cacao y paga servicios digitales.</p>
 
@@ -56,7 +57,7 @@
       <div class="grid">
         <div class="card balance-card">
           <span class="muted">Tu saldo</span>
-          <div class="balance-value"><span id="balance">0</span> <span class="unit">🍫 cacao</span></div>
+          <div class="balance-value"><span id="balance">0</span> <span class="unit"><img class="seed" src="/assets/cacao-seed.svg" alt=""> cacao</span></div>
           <span class="muted" id="rateInfo"></span>
         </div>
 

@@ -11,7 +11,7 @@ final class Wallet
             'cacao_balance' => (float) Ledger::balanceOf($pdo, $user['id']),
             'cacao_per_fiat' => (float) Config::get('CACAO_PER_FIAT', '2'),
             'fiat_currency' => Config::get('FIAT_CURRENCY', 'PEN'),
-            'symbol' => '🍫',
+            'symbol' => '🌱',
             'unit' => 'cacao',
         ]);
     }

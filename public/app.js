@@ -1,4 +1,5 @@
 const state = { token: null, user: null };
+const SEED = '<img class="seed" src="/assets/cacao-seed.svg" alt="">';
 
 const $ = (id) => document.getElementById(id);
 
@@ -74,9 +75,9 @@ async function loadProducts() {
           <div>
             <div class="product-name">${escapeHtml(p.name)}</div>
             <div class="muted small">${escapeHtml(p.description || '')}</div>
-            <div class="small">${p.cacao_price} 🍫 · stock ${p.stock}${p.seller ? ' · ' + escapeHtml(p.seller.name) : ''}</div>
+            <div class="small price">${p.cacao_price} ${SEED} · stock ${p.stock}${p.seller ? ' · ' + escapeHtml(p.seller.name) : ''}</div>
           </div>
-          <button class="btn btn-small" data-redeem="${p.id}">Canjear</button>
+          <button class="btn btn-primary btn-small" data-redeem="${p.id}">Canjear</button>
         </div>`
       )
       .join('');
@@ -102,7 +103,7 @@ async function loadLedger() {
         const cls = e.direction === 'IN' ? 'in' : 'out';
         return `<div class="ledger-row">
           <span class="badge ${e.type.toLowerCase()}">${e.type}</span>
-          <span class="amount ${cls}">${sign}${Number(e.amount).toFixed(2)} 🍫</span>
+          <span class="amount ${cls}">${sign}${Number(e.amount).toFixed(2)} ${SEED}</span>
           <span class="muted small">${new Date(e.created_at).toLocaleString()}</span>
         </div>`;
       })
@@ -193,7 +194,7 @@ $('depositForm').addEventListener('submit', async (e) => {
       body: { amountFiat: parseFloat($('depositAmount').value) },
       idempotent: true,
     });
-    toast('Depositado: +' + res.cacao_credited + ' 🍫');
+    toast('Depositado: +' + res.cacao_credited + ' cacao');
     $('depositAmount').value = '';
     await loadDashboard();
   } catch (err) {
@@ -212,7 +213,7 @@ $('transferForm').addEventListener('submit', async (e) => {
       },
       idempotent: true,
     });
-    toast('Enviado: ' + res.sent + ' 🍫 a ' + res.to.email);
+    toast('Enviado: ' + res.sent + ' cacao a ' + res.to.email);
     $('transferEmail').value = '';
     $('transferAmount').value = '';
     await loadDashboard();
