@@ -56,10 +56,11 @@ final class Ledger
         array $meta = []
     ): void {
         $stmt = $pdo->prepare(
-            'INSERT INTO ledger_entries (transaction_id, entry_type, debit_account_id, credit_account_id, amount, meta)
-             VALUES (?, ?, ?, ?, ?::numeric, ?::jsonb)'
+            'INSERT INTO ledger_entries (id, transaction_id, entry_type, debit_account_id, credit_account_id, amount, meta)
+             VALUES (?, ?, ?, ?, ?, ?, ?)'
         );
         $stmt->execute([
+            Database::uuid(),
             $transactionId,
             $type,
             $debitAccountId,
@@ -71,7 +72,7 @@ final class Ledger
 
     public static function updateBalance(PDO $pdo, string $accountId, string $delta): void
     {
-        $stmt = $pdo->prepare('UPDATE accounts SET balance = balance + (?::numeric) WHERE id = ?');
+        $stmt = $pdo->prepare('UPDATE accounts SET balance = balance + ? WHERE id = ?');
         $stmt->execute([$delta, $accountId]);
     }
 }

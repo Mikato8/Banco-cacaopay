@@ -13,25 +13,22 @@ final class Database
         }
 
         $url = Config::get('DATABASE_URL');
-        if ($url !== '') {
+        if ($url !== '' && str_starts_with($url, 'mysql')) {
             $parts = parse_url($url);
             $host = $parts['host'] ?? 'localhost';
-            $port = (int) ($parts['port'] ?? 5432);
+            $port = (int) ($parts['port'] ?? 3306);
             $db = ltrim($parts['path'] ?? '', '/');
             $user = $parts['user'] ?? '';
             $pass = $parts['pass'] ?? '';
-            parse_str($parts['query'] ?? '', $query);
-            $sslmode = $query['sslmode'] ?? 'require';
         } else {
             $host = Config::get('DB_HOST', 'localhost');
-            $port = Config::int('DB_PORT', 5432);
-            $db = Config::get('DB_NAME', 'neondb');
-            $user = Config::get('DB_USER', 'neondb_owner');
+            $port = Config::int('DB_PORT', 3306);
+            $db = Config::get('DB_NAME', 'cacaopay');
+            $user = Config::get('DB_USER', 'root');
             $pass = Config::get('DB_PASSWORD');
-            $sslmode = Config::get('DB_SSLMODE', 'require');
         }
 
-        $dsn = sprintf('pgsql:host=%s;port=%d;dbname=%s;sslmode=%s', $host, $port, $db, $sslmode);
+        $dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4', $host, $port, $db);
 
         self::$pdo = new PDO($dsn, $user, $pass, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,

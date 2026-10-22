@@ -34,17 +34,19 @@ final class Auth
         }
 
         $hash = password_hash($password, PASSWORD_BCRYPT);
+        $userId = Database::uuid();
 
         $stmt = $pdo->prepare(
-            'INSERT INTO users (email, name, password_hash, role)
-             VALUES (?, ?, ?, ?)
-             RETURNING id, email, name, role, kyc_status, created_at'
+            'INSERT INTO users (id, email, name, password_hash, role) VALUES (?, ?, ?, ?, ?)'
         );
-        $stmt->execute([$email, $name, $hash, $role]);
-        $user = $stmt->fetch();
+        $stmt->execute([$userId, $email, $name, $hash, $role]);
 
-        $acct = $pdo->prepare("INSERT INTO accounts (user_id, kind, currency) VALUES (?, 'USER', 'CACAO')");
-        $acct->execute([$user['id']]);
+        $acct = $pdo->prepare("INSERT INTO accounts (id, user_id, kind, currency) VALUES (?, ?, 'USER', 'CACAO')");
+        $acct->execute([Database::uuid(), $userId]);
+
+        $sel = $pdo->prepare('SELECT id, email, name, role, kyc_status, created_at FROM users WHERE id = ?');
+        $sel->execute([$userId]);
+        $user = $sel->fetch();
 
         Response::json([
             'token' => Jwt::encode(['sub' => $user['id'], 'role' => $role, 'exp' => time() + 604800]),

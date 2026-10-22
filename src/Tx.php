@@ -33,12 +33,14 @@ final class Tx
 
         $pdo->beginTransaction();
         try {
-            $stmt = $pdo->prepare('INSERT INTO transactions (idempotency_key, kind) VALUES (?, ?) RETURNING id');
-            $stmt->execute([$key, $kind]);
-            $txnId = (string) $stmt->fetchColumn();
+            $txnId = Database::uuid();
+            $stmt = $pdo->prepare('INSERT INTO transactions (id, idempotency_key, kind) VALUES (?, ?, ?)');
+            $stmt->execute([$txnId, $key, $kind]);
         } catch (PDOException $e) {
             $pdo->rollBack();
-            if ($e->getCode() === '23505') {
+            $driverCode = isset($e->errorInfo[1]) ? (int) $e->errorInfo[1] : null;
+            $isDuplicate = $e->getCode() === '23505' || $driverCode === 1062;
+            if ($isDuplicate) {
                 $existing = self::lookup($pdo, $key);
                 if ($existing !== null && $existing['result'] !== null) {
                     $payload = json_decode($existing['result'], true);
@@ -54,7 +56,7 @@ final class Tx
 
     public static function finish(PDO $pdo, string $txnId, array $payload, int $status = 201): never
     {
-        $stmt = $pdo->prepare('UPDATE transactions SET result = ?::jsonb WHERE id = ?');
+        $stmt = $pdo->prepare('UPDATE transactions SET result = ? WHERE id = ?');
         $stmt->execute([(string) json_encode($payload, JSON_UNESCAPED_UNICODE), $txnId]);
         $pdo->commit();
         Response::json($payload, $status);

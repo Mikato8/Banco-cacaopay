@@ -11,7 +11,7 @@ final class Products
             "SELECT p.id, p.name, p.description, p.cacao_price, p.stock, u.name AS seller_name
              FROM products p
              LEFT JOIN users u ON u.id = p.seller_id
-             WHERE p.active = TRUE
+             WHERE p.active = 1
              ORDER BY p.cacao_price ASC"
         );
         $rows = $stmt->fetchAll();
@@ -50,19 +50,24 @@ final class Products
         }
 
         $sellerId = $user['role'] === 'SELLER' ? $user['id'] : null;
+        $productId = Database::uuid();
 
         $pdo = Database::pdo();
         $stmt = $pdo->prepare(
-            'INSERT INTO products (name, description, cacao_price, stock, seller_id)
-             VALUES (?, ?, ?::numeric, ?, ?)
-             RETURNING id, name, description, cacao_price, stock, active'
+            'INSERT INTO products (id, name, description, cacao_price, stock, seller_id) VALUES (?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([$name, $description, number_format($price, 2, '.', ''), $stock, $sellerId]);
-        $product = $stmt->fetch();
-        $product['cacao_price'] = (float) $product['cacao_price'];
-        $product['stock'] = (int) $product['stock'];
+        $stmt->execute([$productId, $name, $description, number_format($price, 2, '.', ''), $stock, $sellerId]);
 
-        Response::json(['product' => $product], 201);
+        Response::json([
+            'product' => [
+                'id' => $productId,
+                'name' => $name,
+                'description' => $description,
+                'cacao_price' => $price,
+                'stock' => $stock,
+                'active' => true,
+            ],
+        ], 201);
     }
 
     public static function redeem(array $user, array $body): never
@@ -84,7 +89,7 @@ final class Products
             $stmt = $pdo->prepare('SELECT * FROM products WHERE id = ? FOR UPDATE');
             $stmt->execute([$productId]);
             $product = $stmt->fetch();
-            if (!$product || !$product['active']) {
+            if (!$product || !(int) $product['active']) {
                 throw new AppException(404, 'Producto no disponible');
             }
             if ((int) $product['stock'] < $quantity) {
@@ -111,13 +116,11 @@ final class Products
             $upd = $pdo->prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
             $upd->execute([$quantity, $productId]);
 
+            $redemptionId = Database::uuid();
             $ins = $pdo->prepare(
-                'INSERT INTO redemptions (user_id, product_id, cacao_paid, quantity, transaction_id)
-                 VALUES (?, ?, ?::numeric, ?, ?)
-                 RETURNING id'
+                'INSERT INTO redemptions (id, user_id, product_id, cacao_paid, quantity, transaction_id) VALUES (?, ?, ?, ?, ?, ?)'
             );
-            $ins->execute([$user['id'], $productId, $totalStr, $quantity, $txnId]);
-            $redemptionId = (string) $ins->fetchColumn();
+            $ins->execute([$redemptionId, $user['id'], $productId, $totalStr, $quantity, $txnId]);
 
             $payload = [
                 'cacao_balance' => (float) Ledger::balanceOf($pdo, $user['id']),

@@ -1,6 +1,6 @@
 # Banco CacaoPay 🍫
 
-Wallet digital **multiusuario** en **PHP 8.1+** (sin framework, PDO) + **PostgreSQL (Neon)**, donde:
+Wallet digital **multiusuario** en **PHP 8.1+** (sin framework, PDO) + **MySQL**, donde:
 
 1. Los **depósitos en soles (PEN)** —simulados— se convierten en **cacao** 🍫.
 2. El cacao se **transfiere** entre usuarios (P2P).
@@ -12,34 +12,33 @@ Inspirado en la moneda de 1 Sol de la serie *Recursos Naturales del Perú*.
 
 ## Stack
 
-| Capa     | Tecnología                                              |
-|----------|---------------------------------------------------------|
-| API      | PHP 8.1+, PDO (pgsql), JWT HS256, bcrypt                |
-| DB       | PostgreSQL 18 (Neon, vía connection string del pooler)  |
-| UI       | HTML + CSS + JavaScript (SPA sin build)                 |
+| Capa     | Tecnología                                       |
+|----------|--------------------------------------------------|
+| API      | PHP 8.1+, PDO (mysql), JWT HS256, bcrypt         |
+| DB       | MySQL 5.7+ / 8.x / MariaDB (InnoDB, utf8mb4)     |
+| UI       | HTML + CSS + JavaScript (SPA sin build)          |
 | Auth     | `Authorization: Bearer <token>`, roles `ADMIN`/`SELLER`/`CLIENT` |
 
 ## Arquitectura
 
 ```
 ┌─────────────────────────────┐
-│  public/  (SPA estática)    │
-│  index.html · app.js        │
-│  style.css                  │
+│  public_html/ (SPA estática)│
+│  index.php · index.html     │
+│  app.js · style.css         │
 └──────────────┬──────────────┘
                │ HTTP /api/*
                ▼
 ┌─────────────────────────────┐
-│  public/index.php (router)  │
-│  src/  (PHP, PDO)           │
+│  src/  (PHP, PDO mysql)     │
 │  ├ Auth    ├ Wallet         │
 │  ├ Products├ Ledger (2E)    │
 │  └ Tx (idempotencia)        │
 └──────────────┬──────────────┘
-               │ SQL (TLS)
+               │ SQL
                ▼
 ┌─────────────────────────────┐
-│  Neon PostgreSQL            │
+│  MySQL                      │
 │  users · accounts           │
 │  transactions · ledger_entries │
 │  products · redemptions     │
@@ -52,7 +51,7 @@ El corazón del sistema. Nunca se hace `UPDATE balance = balance - 10` suelto:
 
 - Cada operación crea **una fila** en `ledger_entries` con un **débito** (cuenta que pierde) y un **crédito** (cuenta que gana) por el **mismo monto**.
 - **Invariante:** la suma de saldos de TODAS las cuentas siempre es `0`. El dinero no se crea de la nada.
-- Las cuentas se bloquean con `SELECT … FOR UPDATE` dentro de una transacción ACID.
+- Las cuentas se bloquean con `SELECT … FOR UPDATE` dentro de una transacción ACID (InnoDB).
 
 | Operación | Débito                | Crédito               |
 |-----------|-----------------------|-----------------------|
@@ -81,37 +80,41 @@ de cobrar dos veces. Implementado con `transactions.idempotency_key` `UNIQUE`.
 
 Copia `.env.example` a `.env` (este archivo **no** se sube al repo):
 
-| Variable          | Default      | Uso                                             |
-|-------------------|--------------|-------------------------------------------------|
-| `DATABASE_URL`    | —            | Connection string de Neon (pooler, `sslmode=require`) |
-| `JWT_SECRET`      | dev fallback | Firma de tokens JWT (usa una cadena larga)      |
-| `CLIENT_ORIGIN`   | `*`          | Origen permitido en CORS                        |
-| `FIAT_CURRENCY`   | `PEN`        | Moneda fiat base                                |
-| `CACAO_PER_FIAT`  | `2`          | Tasa: 1 fiat → 2 cacao                          |
-| `APP_DEBUG`       | `false`      | Mostrar errores en pantalla                     |
+| Variable          | Default            | Uso                                        |
+|-------------------|--------------------|--------------------------------------------|
+| `DB_HOST`         | `localhost`        | Host de MySQL                              |
+| `DB_PORT`         | `3306`             | Puerto de MySQL                            |
+| `DB_NAME`         | `cacaopay`         | Nombre de la base de datos                 |
+| `DB_USER`         | `root`             | Usuario de MySQL                           |
+| `DB_PASSWORD`     | —                  | Contraseña de MySQL                        |
+| `JWT_SECRET`      | dev fallback       | Firma de tokens JWT (cadena larga)         |
+| `CLIENT_ORIGIN`   | `*`                | Origen permitido en CORS                   |
+| `FIAT_CURRENCY`   | `PEN`              | Moneda fiat base                           |
+| `CACAO_PER_FIAT`  | `2`                | Tasa: 1 fiat → 2 cacao                     |
+| `APP_DEBUG`       | `false`            | Mostrar errores en pantalla                |
 
-## Base de datos (Neon)
+Alternativa: `DATABASE_URL=mysql://usuario:contraseña@localhost:3306/cacaopay`.
 
-1. Crea (o reutiliza) un proyecto Neon y copia la connection string del **pooler**.
-2. Aplícala en `.env` como `DATABASE_URL`.
-3. Aplica schema y datos demo:
+## Despliegue en Hostinger (shared hosting)
 
-```bash
-psql "$DATABASE_URL" -f db/schema.sql
-psql "$DATABASE_URL" -f db/seed.sql
-```
+1. **Crea la base de datos y el usuario** en hPanel → *MySQL Databases* (host = `localhost`).
+   Anota el nombre de la BD, el usuario y la contraseña.
+2. **Sube los archivos por FTP** (estructura esperada):
 
-> Nunca subas la connection string a git. Si se filtra, rota la contraseña en el dashboard de Neon.
+   ```
+   public_html/            ← contenido de public/ (raíz web, incluye install.php)
+   src/                    ← carpeta src/ (fuera de la raíz web)
+   db/                     ← scripts SQL
+   .env                    ← tus credenciales de MySQL + JWT_SECRET
+   ```
 
-## Inicio rápido (local)
+3. **Edita `.env`** con los datos de MySQL de Hostinger y un `JWT_SECRET` fuerte,
+   y `APP_INSTALL=true` para permitir el instalador.
+4. **Visita `https://tudominio.com/install.php`** una vez: crea las tablas y los
+   usuarios/productos demo. Luego **borra `install.php`** y pon `APP_INSTALL=false`.
+5. Pon `APP_DEBUG=false`.
 
-```bash
-cp .env.example .env   # edita DATABASE_URL y JWT_SECRET
-php -S 127.0.0.1:8000 -t public public/index.php
-```
-
-- UI: http://127.0.0.1:8000
-- API: http://127.0.0.1:8000/api/health
+> Requiere la extensión **`pdo_mysql`** (viene habilitada por defecto en Hostinger).
 
 ### Usuarios demo (contraseña `cacao123`)
 
@@ -121,17 +124,18 @@ php -S 127.0.0.1:8000 -t public public/index.php
 | `vendedor@bancocacao.pe`  | SELLER  |
 | `cliente@bancocacao.pe`   | CLIENT  |
 
-## Despliegue en Hostinger (shared hosting)
+## Inicio rápido (local)
 
-1. Sube el contenido de `public/` a la raíz (`public_html`) y `src/` a `src/` (fuera de `public_html`, si es posible).
-2. Asegúrate de que la extensión **`pdo_pgsql`** esté habilitada en el panel (PHP 8.1+).
-3. Sube tu `.env` (con la connection string de Neon) a la raíz del proyecto.
-4. El `.htaccess` incluido ya reescribe todas las rutas a `index.php` y reenvía el header `Authorization`.
-5. Pon `APP_DEBUG=false` y un `JWT_SECRET` fuerte.
+```bash
+cp .env.example .env        # edita las credenciales de MySQL
+mysql -uroot -p -e "CREATE DATABASE cacaopay CHARACTER SET utf8mb4"
+mysql -uroot -p cacaopay < db/schema.sql
+mysql -uroot -p cacaopay < db/seed.sql
+php -S 127.0.0.1:8000 -t public public/index.php
+```
 
-> **Nota:** Hostinger shared hosting suele traer MySQL, no PostgreSQL. Para usar Neon
-> necesitas `pdo_pgsql` habilitado. Si tu plan no lo permite, usa un VPS/Cloud de
-> Hostinger o cambia el driver a MySQL en `src/Database.php`.
+- UI: http://127.0.0.1:8000
+- API: http://127.0.0.1:8000/api/health
 
 ## API endpoints
 
