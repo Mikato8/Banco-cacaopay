@@ -2,11 +2,9 @@
 
 Wallet digital **multiusuario** en **PHP 8.1+** (sin framework, PDO) + **MySQL**, donde:
 
-1. Los **depósitos en soles (PEN)** —simulados— se convierten en **cacao** 🍫.
-2. El cacao se **transfiere** entre usuarios (P2P).
-3. El cacao se **canjea** por productos del catálogo.
-
-Inspirado en la moneda de 1 Sol de la serie *Recursos Naturales del Perú*.
+1. Los **depósitos en pesos mexicanos (MXN)** —simulados vía **STP**— se convierten en **cacao** (1 cacao = 1 MXN).
+2. El cacao se **transfiere** entre usuarios (P2P) y se **retira** vía STP a una cuenta bancaria (CLABE).
+3. El cacao se **canjea** por productos, se **invierte** en fondos con interés y se usa para **préstamos**.
 
 > Proyecto educativo / prototipo. **No** es un banco real ni está afiliado a ninguna entidad financiera.
 
@@ -75,6 +73,9 @@ de cobrar dos veces. Implementado con `transactions.idempotency_key` `UNIQUE`.
 | `ledger_entries`  | `debit_account_id`, `credit_account_id`, `amount`, `entry_type`, `meta`  |
 | `products`        | `name`, `description`, `cacao_price`, `stock`, `seller_id`               |
 | `redemptions`     | `user_id`, `product_id`, `cacao_paid`, `quantity`, `transaction_id`      |
+| `stp_transfers`   | `direction`, `amount_mxn`, `amount_cacao`, `account_number`, `beneficiary` |
+| `investments`     | `principal_cacao`, `annual_rate`, `status`                                |
+| `loans`           | `principal_cacao`, `annual_rate`, `term_days`, `status`, `due_at`         |
 
 ## Variables de entorno
 
@@ -89,8 +90,11 @@ Copia `.env.example` a `.env` (este archivo **no** se sube al repo):
 | `DB_PASSWORD`     | —                  | Contraseña de MySQL                        |
 | `JWT_SECRET`      | dev fallback       | Firma de tokens JWT (cadena larga)         |
 | `CLIENT_ORIGIN`   | `*`                | Origen permitido en CORS                   |
-| `FIAT_CURRENCY`   | `PEN`              | Moneda fiat base                           |
-| `CACAO_PER_FIAT`  | `2`                | Tasa: 1 fiat → 2 cacao                     |
+| `FIAT_CURRENCY`   | `MXN`              | Moneda fiat base                           |
+| `CACAO_PER_FIAT`  | `1`                | Tasa: 1 MXN = 1 cacao                      |
+| `INVEST_ANNUAL_RATE` | `0.05`          | Tasa anual de inversión (0.05 = 5%)        |
+| `LOAN_ANNUAL_RATE`   | `0.12`          | Tasa anual de préstamos (0.12 = 12%)       |
+| `LOAN_TERM_DAYS`     | `30`            | Plazo por defecto de los préstamos         |
 | `APP_DEBUG`       | `false`            | Mostrar errores en pantalla                |
 
 Alternativa: `DATABASE_URL=mysql://usuario:contraseña@localhost:3306/cacaopay`.
@@ -154,6 +158,15 @@ Base: `/api` · `Content-Type: application/json` · Auth: `Authorization: Bearer
 | GET    | `/products`            | No             | Catálogo activo                  |
 | POST   | `/products`            | Sí (SELLER/ADMIN) | Crear producto               |
 | POST   | `/products/redeem`     | Sí             | Canjear producto con cacao       |
+| POST   | `/stp/deposit`         | Sí             | Entrada STP (MXN → cacao)        |
+| POST   | `/stp/withdraw`        | Sí             | Salida STP (cacao → MXN a CLABE) |
+| GET    | `/stp/transfers`       | Sí             | Historial de transferencias STP  |
+| POST   | `/investments`         | Sí             | Invertir cacao (genera interés)  |
+| GET    | `/investments`         | Sí             | Inversiones activas + interés    |
+| POST   | `/investments/redeem`  | Sí             | Redimir inversión + interés      |
+| POST   | `/loans`               | Sí             | Solicitar préstamo en cacao      |
+| GET    | `/loans`               | Sí             | Préstamos activos + interés      |
+| POST   | `/loans/repay`         | Sí             | Pagar préstamo + interés         |
 
 Ejemplo (depósito con idempotencia):
 
@@ -179,8 +192,8 @@ curl -s -X POST http://127.0.0.1:8000/api/wallet/deposit \
 
 ## Aviso legal
 
-Crear un banco digital real requiere licencias financieras (SBS en Perú), dinero
-electrónico (EMI) y políticas AML. Este es un prototipo educativo.
+Crear un banco digital real requiere licencias financieras (CNBV / Banco de México),
+dinero electrónico (EMI) y políticas AML. Este es un prototipo educativo.
 
 ## Licencia
 
