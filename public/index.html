@@ -87,7 +87,53 @@
           <label>Cantidad (cacao)<input type="number" id="withdrawAmount" min="0.01" step="0.01" required /></label>
           <label>CLABE (18 dígitos)<input type="text" id="withdrawClabe" inputmode="numeric" maxlength="18" required /></label>
           <label>Beneficiario<input type="text" id="withdrawBeneficiary" required /></label>
-          <label>Banco<input type="text" id="withdrawBank" placeholder="Ej. BBVA" /></label>
+          <label>Banco
+            <select id="withdrawBank">
+              <option value="">Selecciona banco…</option>
+              <option>ABC Capital</option>
+              <option>Afirme</option>
+              <option>Banca Mifel</option>
+              <option>Banco Actinver</option>
+              <option>Banco Ahorro Famsa</option>
+              <option>Banco Autofin México</option>
+              <option>Banco Azteca</option>
+              <option>Banco Base</option>
+              <option>Banco Compartamos</option>
+              <option>Banco Covalto</option>
+              <option>Banco del Bajío</option>
+              <option>Banco del Bienestar</option>
+              <option>Banco Forjadores</option>
+              <option>Banco Inbursa</option>
+              <option>Banco Inmobiliario Mexicano</option>
+              <option>Banco Invex</option>
+              <option>Banco Monex</option>
+              <option>Banco Multiva</option>
+              <option>Banco Pagatodo</option>
+              <option>Banco Progreso Chihuahua</option>
+              <option>Banco Sabadell México</option>
+              <option>Banco Santander México</option>
+              <option>Banco Ve por Más (BX+)</option>
+              <option>BanCoppel</option>
+              <option>Bancrea</option>
+              <option>Banjercito</option>
+              <option>Bank of America México</option>
+              <option>Banorte</option>
+              <option>Banregio</option>
+              <option>Bansí</option>
+              <option>BBVA México</option>
+              <option>CIBanco</option>
+              <option>Citibanamex</option>
+              <option>Dondé Banco</option>
+              <option>HSBC México</option>
+              <option>Intercam Banco</option>
+              <option>J.P. Morgan México</option>
+              <option>Scotiabank México</option>
+              <option>Shinhan Bank México</option>
+              <option>Banobras (Banca de desarrollo)</option>
+              <option>Nacional Financiera (Nafin)</option>
+              <option>Bancomext</option>
+            </select>
+          </label>
           <button class="btn btn-primary" type="submit">Retirar</button>
         </form>
         <div class="list-head"><h3>Transferencias STP</h3></div>
