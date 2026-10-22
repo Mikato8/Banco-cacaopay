@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Banco CacaoPay</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="coin" aria-hidden="true">🍫</span>
+      <span class="brand-name">Banco <strong>CacaoPay</strong></span>
+    </div>
+    <button id="logoutBtn" class="btn btn-ghost hidden">Cerrar sesión</button>
+  </header>
+
+  <main>
+    <!-- ===================== AUTH ===================== -->
+    <section id="authView" class="card auth-card">
+      <h1>Bienvenido a CacaoPay</h1>
+      <p class="muted">Deposita soles, recibe cacao y paga servicios digitales.</p>
+
+      <div class="tabs">
+        <button id="tabLogin" class="tab active">Iniciar sesión</button>
+        <button id="tabRegister" class="tab">Registrarse</button>
+      </div>
+
+      <form id="loginForm" class="form">
+        <label>Email<input type="email" id="loginEmail" autocomplete="username" required /></label>
+        <label>Contraseña<input type="password" id="loginPassword" autocomplete="current-password" required /></label>
+        <button class="btn btn-primary" type="submit">Entrar</button>
+      </form>
+
+      <form id="registerForm" class="form hidden">
+        <label>Nombre<input type="text" id="regName" required /></label>
+        <label>Email<input type="email" id="regEmail" autocomplete="username" required /></label>
+        <label>Contraseña<input type="password" id="regPassword" autocomplete="new-password" minlength="6" required /></label>
+        <label>Rol
+          <select id="regRole">
+            <option value="CLIENT">Cliente</option>
+            <option value="SELLER">Vendedor</option>
+          </select>
+        </label>
+        <button class="btn btn-primary" type="submit">Crear cuenta</button>
+      </form>
+
+      <div class="demo-hint">
+        <p class="muted">Usuarios demo (contraseña <code>cacao123</code>):</p>
+        <code>admin@bancocacao.pe</code> · <code>vendedor@bancocacao.pe</code> · <code>cliente@bancocacao.pe</code>
+      </div>
+    </section>
+
+    <!-- ===================== DASHBOARD ===================== -->
+    <section id="appView" class="hidden">
+      <div class="grid">
+        <div class="card balance-card">
+          <span class="muted">Tu saldo</span>
+          <div class="balance-value"><span id="balance">0</span> <span class="unit">🍫 cacao</span></div>
+          <span class="muted" id="rateInfo"></span>
+        </div>
+
+        <div class="card">
+          <h3>Depositar (simulado)</h3>
+          <form id="depositForm" class="form inline">
+            <label>Monto en <span id="fiatLabel">PEN</span>
+              <input type="number" id="depositAmount" min="1" step="0.01" placeholder="25.00" required />
+            </label>
+            <button class="btn btn-primary" type="submit">Depositar</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3>Transferir cacao</h3>
+          <form id="transferForm" class="form">
+            <label>Email destinatario<input type="email" id="transferEmail" required /></label>
+            <label>Cantidad (cacao)<input type="number" id="transferAmount" min="0.01" step="0.01" required /></label>
+            <button class="btn btn-primary" type="submit">Enviar</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Catálogo de productos</h3>
+        <div id="products" class="products"></div>
+      </div>
+
+      <div class="card">
+        <h3>Movimientos recientes</h3>
+        <div id="ledger" class="ledger"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
