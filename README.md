@@ -134,6 +134,11 @@ por defecto y la configuración se puede guardar después desde la UI (ADMIN) o 
 
 > Requiere la extensión **`pdo_mysql`** (viene habilitada por defecto en Hostinger).
 
+📘 **Guía detallada (recomendada): [`docs/despliegue-hostinger.md`](docs/despliegue-hostinger.md)**
+— estructura de carpetas, `.env` fuera de `public_html`, instalación nueva vs **actualizar
+un sitio ya en línea** (solo `db/fiscal.sql`), checklist de seguridad, verificación en
+producción y rollback.
+
 ### Usuarios demo (contraseña `cacao123`)
 
 | Correo                    | Rol     |
@@ -351,6 +356,15 @@ tests/fiscal-e2e.sh --help
 Imprime el resultado por escenario y termina con `RESULTADO: PASS` (código 0) o
 `RESULTADO: FAIL n/m` (código 1). Requiere `php`, `mysqld`/`mysqladmin`, `curl` y
 `python3` (para las aserciones JSON; no necesita `jq`).
+
+### Capturas
+
+- Vista **ADMIN**: [`docs/capturas/fiscal-admin.png`](docs/capturas/fiscal-admin.png) —
+  balance, alertas, congruencia, cuadre, captura de CFDI, configuración y cierres.
+- Vista **CLIENTE**: [`docs/capturas/fiscal-cliente.png`](docs/capturas/fiscal-cliente.png)
+  — constancia propia, sin acciones de administración.
+
+Historial de cambios: [`CHANGELOG.md`](CHANGELOG.md).
 
 > **Aviso legal del módulo fiscal.** Es un módulo de **registro y conciliación fiscal
 > interno**, con datos capturados manualmente. Los CFDI son un **registro interno
