@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Banco CacaoPay</title>
-  <link rel="stylesheet" href="/style.css?v=3" />
+  <link rel="stylesheet" href="/style.css?v=4" />
 </head>
 <body>
   <header class="topbar">
@@ -12,6 +12,10 @@
       <img class="coin" src="/assets/cacao-seed.svg" alt="Semilla de cacao" />
       <span class="brand-name">Banco <strong>CacaoPay</strong></span>
     </div>
+    <nav id="mainNav" class="nav-tabs hidden">
+      <button id="navWallet" class="nav-tab active" type="button">Billetera</button>
+      <button id="navFiscal" class="nav-tab" type="button">Fiscal · SAT</button>
+    </nav>
     <button id="logoutBtn" class="btn btn-outline hidden">Cerrar sesión</button>
   </header>
 
@@ -169,10 +173,187 @@
         <div id="ledger" class="ledger"></div>
       </div>
     </section>
+
+    <!-- ===================== FISCAL · SAT ===================== -->
+    <section id="fiscalView" class="hidden">
+      <div class="card">
+        <h2 class="section-title">Fiscal · SAT</h2>
+        <p class="note">
+          Módulo de <strong>registro y conciliación fiscal interno</strong>, con datos capturados
+          manualmente. No timbra ni valida CFDI ante el SAT; no sustituye asesoría contable ni
+          fiscal. Para deducciones, acreditamiento de IVA y obligaciones formales consulta a tu
+          contador y usa un PAC certificado.
+        </p>
+
+        <div class="period-bar">
+          <label>Desde<input type="date" id="fiscalFrom" /></label>
+          <label>Hasta<input type="date" id="fiscalTo" /></label>
+          <div class="period-actions">
+            <button id="fiscalQuickMonth" class="btn btn-small btn-outline" type="button">Mes actual</button>
+            <button id="fiscalQuickYear" class="btn btn-small btn-outline" type="button">Año actual</button>
+            <button id="fiscalRefresh" class="btn btn-small btn-primary" type="button">Actualizar</button>
+          </div>
+        </div>
+
+        <div class="fiscal-status">
+          <span id="fiscalScopeNote" class="muted small">—</span>
+          <span id="fiscalEstado" class="badge">—</span>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi">
+          <span class="kpi-label">Facturado neto</span>
+          <span class="kpi-value" id="kpiFacturado">$0.00</span>
+          <span class="kpi-sub" id="kpiFacturadoSub">—</span>
+          <span class="kpi-sub" id="kpiMesesSub">—</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">IVA trasladado neto</span>
+          <span class="kpi-value" id="kpiIva">$0.00</span>
+          <span class="kpi-sub">Ingresos menos notas de crédito</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Depósitos STP</span>
+          <span class="kpi-value" id="kpiDepositos">$0.00</span>
+          <span class="kpi-sub" id="kpiDepositosSub">—</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Retiros STP</span>
+          <span class="kpi-value" id="kpiRetiros">$0.00</span>
+          <span class="kpi-sub" id="kpiRetirosSub">—</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Cobertura de facturación</span>
+          <span class="kpi-value" id="kpiCobertura">0.00 %</span>
+          <span class="kpi-sub">Depósitos respaldados por CFDI vigentes</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Diferencia depósitos − CFDI</span>
+          <span class="kpi-value" id="kpiDiferencia">$0.00</span>
+          <span class="kpi-sub">Depósitos sin facturar − CFDI sin depósito</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Alertas fiscales</h3>
+        <div id="fiscalAlerts" class="alerts"></div>
+      </div>
+
+      <div class="card">
+        <h3>Congruencia depósitos / retiros</h3>
+        <p class="muted small">Depósitos del periodo y CFDI que los respaldan; retiros y notas de crédito relacionados.</p>
+        <div id="fiscalCongruencia" class="table-wrap"></div>
+      </div>
+
+      <div class="card">
+        <h3>Cuadre contable (libro mayor vs STP)</h3>
+        <div id="fiscalCuadreLedger" class="ledger"></div>
+      </div>
+
+      <div id="cfdiFormCard" class="card hidden">
+        <h3>Registrar CFDI</h3>
+        <p class="muted small">Registro interno simulado: captura manual, sin timbrado ante el SAT.</p>
+        <form id="cfdiForm" class="form columns">
+          <label>UUID fiscal<input type="text" id="cfdiUuid" maxlength="36" placeholder="8-4-4-4-12" required /></label>
+          <label>Fecha de emisión<input type="date" id="cfdiFecha" /></label>
+          <label>Tipo de comprobante
+            <select id="cfdiTipo">
+              <option value="I">I · Ingreso</option>
+              <option value="E">E · Egreso / nota de crédito</option>
+              <option value="P">P · Pago</option>
+              <option value="T">T · Traslado</option>
+            </select>
+          </label>
+          <label>RFC receptor<input type="text" id="cfdiRfc" maxlength="13" placeholder="XAXX010101000" required /></label>
+          <label>Nombre / razón social<input type="text" id="cfdiNombre" maxlength="255" required /></label>
+          <label>Subtotal (MXN)<input type="number" id="cfdiSubtotal" min="0.01" step="0.01" required /></label>
+          <label>IVA (MXN)<input type="number" id="cfdiIva" step="0.01" readonly /></label>
+          <label>Total (MXN)<input type="number" id="cfdiTotal" step="0.01" readonly /></label>
+          <label>Forma de pago
+            <select id="cfdiFormaPago">
+              <option value="01">01 · Efectivo</option>
+              <option value="03" selected>03 · Transferencia electrónica de fondos</option>
+              <option value="04">04 · Tarjeta de crédito</option>
+              <option value="28">28 · Tarjeta de débito</option>
+              <option value="99">99 · Por definir</option>
+            </select>
+          </label>
+          <label>Método de pago
+            <select id="cfdiMetodoPago">
+              <option value="PUE" selected>PUE · Pago en una sola exhibición</option>
+              <option value="PPD">PPD · Pago en parcialidades o diferido</option>
+            </select>
+          </label>
+          <label>Uso del CFDI
+            <select id="cfdiUso">
+              <option value="G01">G01 · Adquisición de mercancías</option>
+              <option value="G03" selected>G03 · Gastos en general</option>
+              <option value="P01">P01 · Por definir</option>
+              <option value="S01">S01 · Sin efectos fiscales</option>
+            </select>
+          </label>
+          <label>Depósito relacionado
+            <select id="cfdiTransfer">
+              <option value="">Sin transferencia relacionada</option>
+            </select>
+          </label>
+          <button id="cfdiSubmit" class="btn btn-primary" type="submit">Registrar CFDI</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>CFDI del periodo</h3>
+        <div class="export-bar">
+          <button id="exportCfdi" class="btn btn-small btn-outline" type="button">Exportar CFDI (CSV)</button>
+          <button id="exportMovimientos" class="btn btn-small btn-outline" type="button">Exportar movimientos (CSV)</button>
+          <button id="exportCongruencia" class="btn btn-small btn-outline" type="button">Exportar congruencia (CSV)</button>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="cfdiList">
+            <caption class="table-caption"></caption>
+            <thead>
+              <tr>
+                <th>Fecha</th><th>UUID</th><th>Tipo</th><th>Receptor</th>
+                <th class="num">Subtotal</th><th class="num">IVA</th><th class="num">Total</th>
+                <th>Forma / método</th><th>Depósito</th><th>Estado</th><th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="fiscalSettingsCard" class="card hidden">
+        <h3>Configuración fiscal</h3>
+        <p class="muted small">Identidad fiscal del emisor y tasa de IVA aplicada al registrar CFDI.</p>
+        <form id="fiscalSettingsForm" class="form columns">
+          <label>RFC emisor<input type="text" id="fsRfc" maxlength="13" placeholder="XAXX010101000" /></label>
+          <label>Razón social<input type="text" id="fsRazonSocial" maxlength="255" /></label>
+          <label>Régimen fiscal<input type="text" id="fsRegimen" maxlength="3" placeholder="612" /></label>
+          <label>Código postal<input type="text" id="fsCp" maxlength="5" placeholder="01000" inputmode="numeric" /></label>
+          <label>Serie<input type="text" id="fsSerie" maxlength="10" placeholder="A" /></label>
+          <label>Tasa de IVA (%)<input type="number" id="fsIvaRate" min="0" max="100" step="0.01" placeholder="16" /></label>
+          <button class="btn btn-primary" type="submit">Guardar configuración</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Cierres de periodo</h3>
+        <p class="note" id="closePeriodNote">
+          El cierre del periodo es inmutable y se encadena con el cierre anterior mediante un
+          digest SHA-256. Se cierra el mes de la fecha «Desde».
+        </p>
+        <div class="toolbar">
+          <button id="closePeriodBtn" class="btn btn-small btn-outline hidden" type="button">Cerrar periodo</button>
+        </div>
+        <div id="fiscalPeriods" class="table-wrap"></div>
+      </div>
+    </section>
   </main>
 
   <div id="toast" class="toast hidden"></div>
 
-  <script src="/app.js?v=3"></script>
+  <script src="/app.js?v=4"></script>
 </body>
 </html>

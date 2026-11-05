@@ -20,7 +20,10 @@ try {
     $seed = (string) file_get_contents(__DIR__ . '/../db/seed.sql');
     $migrate = (string) file_get_contents(__DIR__ . '/../db/migrate.sql');
 
-    foreach (explode(';', $schema . "\n" . $seed . "\n" . $migrate) as $statement) {
+    $fiscalPath = __DIR__ . '/../db/fiscal.sql';
+    $fiscal = is_file($fiscalPath) ? (string) file_get_contents($fiscalPath) : '';
+
+    foreach (explode(';', $schema . "\n" . $seed . "\n" . $migrate . "\n" . $fiscal) as $statement) {
         $statement = trim($statement);
         if ($statement === '') {
             continue;
@@ -28,7 +31,10 @@ try {
         $pdo->exec($statement);
     }
 
-    echo "OK: esquema y datos demo instalados.\n";
+    // Fila única de configuración fiscal (id=1) con los valores FISCAL_* del .env.
+    Fiscal::ensureSettings();
+
+    echo "OK: esquema y datos demo instalados (incluye módulo fiscal SAT).\n";
     echo "Borra install.php y pon APP_INSTALL=false en .env\n";
 } catch (Throwable $e) {
     http_response_code(500);
