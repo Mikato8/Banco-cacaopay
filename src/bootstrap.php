@@ -16,8 +16,11 @@ require __DIR__ . '/Products.php';
 require __DIR__ . '/Stp.php';
 require __DIR__ . '/Investments.php';
 require __DIR__ . '/Loans.php';
+require __DIR__ . '/Fiscal.php';
 
 Config::load(__DIR__ . '/../.env');
+
+date_default_timezone_set('America/Mexico_City');
 
 error_reporting(E_ALL);
 ini_set('display_errors', Config::bool('APP_DEBUG', false) ? '1' : '0');

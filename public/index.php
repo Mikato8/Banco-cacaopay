@@ -133,5 +133,36 @@ function route(string $method, string $path): never
         Loans::repay(Auth::requireAuth(), Http::body());
     }
 
+    if ($method === 'GET' && $path === '/api/fiscal/settings') {
+        Fiscal::settings(Auth::requireAuth());
+    }
+    if ($method === 'POST' && $path === '/api/fiscal/settings') {
+        Fiscal::updateSettings(Auth::requireAuth(), Http::body());
+    }
+    if ($method === 'GET' && $path === '/api/fiscal/summary') {
+        Fiscal::summary(Auth::requireAuth(), $_GET);
+    }
+    if ($method === 'GET' && $path === '/api/fiscal/congruence') {
+        Fiscal::congruence(Auth::requireAuth(), $_GET);
+    }
+    if ($method === 'GET' && $path === '/api/fiscal/invoices') {
+        Fiscal::invoices(Auth::requireAuth(), $_GET);
+    }
+    if ($method === 'POST' && $path === '/api/fiscal/invoices') {
+        Fiscal::createInvoice(Auth::requireAuth(), Http::body());
+    }
+    if ($method === 'POST' && $path === '/api/fiscal/invoices/cancel') {
+        Fiscal::cancelInvoice(Auth::requireAuth(), Http::body());
+    }
+    if ($method === 'GET' && $path === '/api/fiscal/export') {
+        Fiscal::export(Auth::requireAuth(), $_GET);
+    }
+    if ($method === 'GET' && $path === '/api/fiscal/periods') {
+        Fiscal::periods(Auth::requireAuth());
+    }
+    if ($method === 'POST' && $path === '/api/fiscal/periods/close') {
+        Fiscal::closePeriod(Auth::requireAuth(), Http::body());
+    }
+
     Response::error('Ruta no encontrada', 404);
 }
